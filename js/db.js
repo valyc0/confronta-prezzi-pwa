@@ -85,4 +85,22 @@ class ProductDB {
             request.onerror = () => reject(request.error);
         });
     }
+
+    async findDuplicate(product, store) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const objectStore = transaction.objectStore(this.storeName);
+            const request = objectStore.getAll();
+
+            request.onsuccess = () => {
+                const products = request.result;
+                const duplicate = products.find(p => 
+                    p.product.toLowerCase() === product.toLowerCase() && 
+                    p.store.toLowerCase() === store.toLowerCase()
+                );
+                resolve(duplicate);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
 }

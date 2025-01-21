@@ -18,6 +18,14 @@ const editPrice = document.getElementById('editPrice');
 const editDate = document.getElementById('editDate');
 let productToEdit = null;
 
+// Elementi del modal duplicati
+const duplicateModal = document.getElementById('duplicateModal');
+const cancelDuplicate = document.getElementById('cancelDuplicate');
+const confirmDuplicate = document.getElementById('confirmDuplicate');
+const previousPrice = document.getElementById('previousPrice');
+const previousDate = document.getElementById('previousDate');
+let pendingProduct = null;
+
 // Formatta prezzo in Euro
 const formatPrice = (price) => new Intl.NumberFormat('it-IT', {
     style: 'currency',
@@ -196,6 +204,50 @@ if (editModal) {
     });
 }
 
+// Funzioni per il modal dei duplicati
+function showDuplicateModal(duplicate, newProduct) {
+    console.log('Showing duplicate modal', { duplicate, newProduct });
+    pendingProduct = {
+        id: duplicate.id,  // Manteniamo l'ID del prodotto esistente
+        ...newProduct     // Aggiungiamo i nuovi dati
+    };
+    previousPrice.textContent = formatPrice(duplicate.price);
+    previousDate.textContent = formatDate(duplicate.date);
+    duplicateModal.classList.remove('hidden');
+    duplicateModal.classList.add('flex');
+}
+
+function hideDuplicateModal() {
+    duplicateModal.classList.add('hidden');
+    duplicateModal.classList.remove('flex');
+    pendingProduct = null;
+}
+
+// Event listeners per il modal dei duplicati
+if (duplicateModal) {
+    // Click fuori dal modal per chiudere
+    duplicateModal.addEventListener('click', (e) => {
+        if (e.target === duplicateModal) {
+            hideDuplicateModal();
+        }
+    });
+
+    // Pulsante annulla
+    cancelDuplicate.addEventListener('click', hideDuplicateModal);
+
+    // Pulsante conferma
+    confirmDuplicate.addEventListener('click', async () => {
+        if (pendingProduct && pendingProduct.id) {
+            await productDB.updateProduct(pendingProduct.id, pendingProduct);
+            productForm.reset();
+            await updateProductList();
+            await updateStoresList();
+            setTodayDate();
+            hideDuplicateModal();
+        }
+    });
+}
+
 // Gestisce l'invio del form
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -207,11 +259,20 @@ productForm.addEventListener('submit', async (e) => {
         date: document.getElementById('date').value
     };
 
-    await productDB.addProduct(product);
-    productForm.reset();
-    await updateProductList();
-    await updateStoresList();
-    setTodayDate();
+    console.log('Checking for duplicate:', product);
+    // Controlla se esiste già un prodotto uguale
+    const duplicate = await productDB.findDuplicate(product.product, product.store);
+    
+    if (duplicate) {
+        console.log('Found duplicate:', duplicate);
+        showDuplicateModal(duplicate, product);
+    } else {
+        await productDB.addProduct(product);
+        productForm.reset();
+        await updateProductList();
+        await updateStoresList();
+        setTodayDate();
+    }
 });
 
 // Imposta la data di oggi come valore predefinito
