@@ -1,0 +1,17 @@
+{
+    "name": "Confronta prezzi",
+    "short_name": "ConfPrezzi",
+    "description": "Uncalcolatore prezzi offline",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4dabf7",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
