@@ -60,4 +60,29 @@ class ProductDB {
             request.onerror = () => reject(request.error);
         });
     }
+
+    async updateProduct(id, product) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            
+            // Aggiungiamo l'id al prodotto per assicurarci che venga aggiornato il record corretto
+            product.id = id;
+            const request = store.put(product);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getProduct(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.get(id);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
 }

@@ -2,11 +2,21 @@ const productDB = new ProductDB();
 const productForm = document.getElementById('productForm');
 const productList = document.getElementById('productList');
 
-// Elementi del modal
+// Elementi del modal di eliminazione
 const deleteModal = document.getElementById('deleteModal');
 const cancelDelete = document.getElementById('cancelDelete');
 const confirmDelete = document.getElementById('confirmDelete');
 let productToDelete = null;
+
+// Elementi del modal di modifica
+const editModal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
+const cancelEdit = document.getElementById('cancelEdit');
+const editProduct = document.getElementById('editProduct');
+const editStore = document.getElementById('editStore');
+const editPrice = document.getElementById('editPrice');
+const editDate = document.getElementById('editDate');
+let productToEdit = null;
 
 // Formatta prezzo in Euro
 const formatPrice = (price) => new Intl.NumberFormat('it-IT', {
@@ -43,12 +53,20 @@ async function updateProductList() {
                     <p class="text-gray-800 font-medium">${formatPrice(product.price)}</p>
                     <p class="text-sm text-gray-500">${formatDate(product.date)}</p>
                 </div>
-                <button onclick="showDeleteModal(${product.id})" 
-                    class="text-red-500 hover:text-red-700 focus:outline-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+                <div class="flex space-x-2">
+                    <button onclick="showEditModal(${product.id})" 
+                        class="text-indigo-500 hover:text-indigo-700 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                    </button>
+                    <button onclick="showDeleteModal(${product.id})" 
+                        class="text-red-500 hover:text-red-700 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         `;
         productList.appendChild(productCard);
@@ -72,7 +90,7 @@ function filterProducts(products) {
     });
 }
 
-// Funzioni per il modal
+// Funzioni per il modal di eliminazione
 window.showDeleteModal = function(id) {
     productToDelete = id;
     deleteModal.classList.remove('hidden');
@@ -85,7 +103,7 @@ function hideDeleteModal() {
     productToDelete = null;
 }
 
-// Event listeners per il modal
+// Event listeners per il modal di eliminazione
 if (cancelDelete) {
     cancelDelete.addEventListener('click', hideDeleteModal);
 }
@@ -100,11 +118,65 @@ if (confirmDelete) {
     });
 }
 
-// Chiudi il modal se si clicca fuori
+// Chiudi il modal di eliminazione se si clicca fuori
 if (deleteModal) {
     deleteModal.addEventListener('click', (e) => {
         if (e.target === deleteModal) {
             hideDeleteModal();
+        }
+    });
+}
+
+// Funzioni per il modal di modifica
+window.showEditModal = async function(id) {
+    productToEdit = id;
+    const product = await productDB.getProduct(id);
+    
+    // Popola il form con i dati del prodotto
+    editProduct.value = product.product;
+    editStore.value = product.store;
+    editPrice.value = product.price;
+    editDate.value = product.date;
+    
+    editModal.classList.remove('hidden');
+    editModal.classList.add('flex');
+}
+
+function hideEditModal() {
+    editModal.classList.add('hidden');
+    editModal.classList.remove('flex');
+    productToEdit = null;
+    editForm.reset();
+}
+
+// Event listeners per il modal di modifica
+if (cancelEdit) {
+    cancelEdit.addEventListener('click', hideEditModal);
+}
+
+if (editForm) {
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (productToEdit !== null) {
+            const updatedProduct = {
+                product: document.getElementById('editProduct').value,
+                store: document.getElementById('editStore').value,
+                price: parseFloat(document.getElementById('editPrice').value),
+                date: document.getElementById('editDate').value
+            };
+            
+            await productDB.updateProduct(productToEdit, updatedProduct);
+            hideEditModal();
+            await updateProductList();
+        }
+    });
+}
+
+// Chiudi il modal di modifica se si clicca fuori
+if (editModal) {
+    editModal.addEventListener('click', (e) => {
+        if (e.target === editModal) {
+            hideEditModal();
         }
     });
 }
