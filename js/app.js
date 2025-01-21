@@ -27,6 +27,21 @@ const formatPrice = (price) => new Intl.NumberFormat('it-IT', {
 // Formatta data
 const formatDate = (dateString) => new Intl.DateTimeFormat('it-IT').format(new Date(dateString));
 
+// Ottiene la lista unica dei negozi
+async function updateStoresList() {
+    const products = await productDB.getAllProducts();
+    const stores = [...new Set(products.map(p => p.store))].sort();
+    
+    const storesList = document.getElementById('storesList');
+    storesList.innerHTML = '';
+    
+    stores.forEach(store => {
+        const option = document.createElement('option');
+        option.value = store;
+        storesList.appendChild(option);
+    });
+}
+
 // Aggiorna la lista dei prodotti
 async function updateProductList() {
     const products = await productDB.getAllProducts();
@@ -195,7 +210,8 @@ productForm.addEventListener('submit', async (e) => {
     await productDB.addProduct(product);
     productForm.reset();
     await updateProductList();
-    setTodayDate(); // Reset the date to today after form submission
+    await updateStoresList();
+    setTodayDate();
 });
 
 // Imposta la data di oggi come valore predefinito
@@ -211,8 +227,11 @@ function setTodayDate() {
 // Imposta la data quando la pagina si carica
 setTodayDate();
 
-// Carica la lista iniziale
-productDB.init().then(() => updateProductList());
+// Carica la lista iniziale e la lista dei negozi
+productDB.init().then(() => {
+    updateProductList();
+    updateStoresList();
+});
 
 // Aggiungi event listener per la ricerca in tempo reale
 const searchInputs = ['searchProduct', 'searchStore', 'minPrice', 'maxPrice'];
